@@ -44,7 +44,8 @@ export const generateMultiverseIdentity = async (
   onProgress: (step: string) => void
 ) => {
   // Always instantiate GoogleGenAI within the call to ensure the latest API key is used
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = process.env.API_KEY || '';
+  const ai = new GoogleGenAI({ apiKey });
   const imageBase64Data = base64Image.split(',')[1];
 
   // 1. Generate Transformed Image using Gemini 2.5 Flash Image
@@ -73,9 +74,12 @@ export const generateMultiverseIdentity = async (
 
   let generatedImageUrl = '';
   // Correctly iterate through parts to find the image data
-  for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-    if (part.inlineData) {
-      generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
+  const candidates = imageResponse.candidates;
+  if (candidates && candidates.length > 0) {
+    for (const part of candidates[0].content.parts) {
+      if (part.inlineData) {
+        generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
+      }
     }
   }
 
