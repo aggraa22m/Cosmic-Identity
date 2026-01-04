@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Universe } from "../types";
 
@@ -43,12 +42,10 @@ export const generateMultiverseIdentity = async (
   universe: Universe,
   onProgress: (step: string) => void
 ) => {
-  // Always instantiate GoogleGenAI within the call to ensure the latest API key is used
   const apiKey = process.env.API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
   const imageBase64Data = base64Image.split(',')[1];
 
-  // 1. Generate Transformed Image using Gemini 2.5 Flash Image
   onProgress('Consulting the Multiverse shards...');
   const imageResponse = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -73,7 +70,6 @@ export const generateMultiverseIdentity = async (
   });
 
   let generatedImageUrl = '';
-  // Safely iterate through candidates and parts
   const firstCandidate = imageResponse.candidates?.[0];
   if (firstCandidate?.content?.parts) {
     for (const part of firstCandidate.content.parts) {
@@ -86,7 +82,6 @@ export const generateMultiverseIdentity = async (
 
   if (!generatedImageUrl) throw new Error("The portal failed to manifest your image. Try a different universe.");
 
-  // 2. Generate Story & Detect Gender using Gemini 3 Flash
   onProgress('Scanning biological signatures...');
   const textResponse = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -129,11 +124,9 @@ export const generateMultiverseIdentity = async (
     }
   });
 
-  // Extract text content using the .text property safely
   const identity = JSON.parse(textResponse.text || '{}');
   const selectedVoice = identity.gender === 'female' ? universe.femaleVoice : universe.maleVoice;
 
-  // 3. Generate Audio Greeting using Gemini 2.5 Flash TTS
   onProgress('Tuning the trans-dimensional frequencies...');
   const audioResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",
@@ -163,7 +156,14 @@ export interface PlayingAudio {
 }
 
 export const playGeneratedAudio = async (base64Audio: string): Promise<PlayingAudio> => {
-  const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+  const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+  const outputAudioContext = new AudioCtx({ sampleRate: 24000 });
+  
+  // CRITICAL: Mobile browsers require resume() to be called inside a user gesture
+  if (outputAudioContext.state === 'suspended') {
+    await outputAudioContext.resume();
+  }
+
   const audioBuffer = await decodeAudioData(
     decode(base64Audio),
     outputAudioContext,
@@ -178,7 +178,8 @@ export const playGeneratedAudio = async (base64Audio: string): Promise<PlayingAu
 };
 
 export const getAudioBuffer = async (base64Audio: string): Promise<AudioBuffer> => {
-  const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+  const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+  const outputAudioContext = new AudioCtx({ sampleRate: 24000 });
   return await decodeAudioData(
     decode(base64Audio),
     outputAudioContext,

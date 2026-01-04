@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { AppState, ExplorerData, Universe } from './types';
 import { UNIVERSES } from './constants';
@@ -64,17 +63,21 @@ const App: React.FC = () => {
       // Stop existing audio if playing
       if (activeAudioRef.current) {
         try { activeAudioRef.current.source.stop(); } catch(e) {}
-        activeAudioRef.current.context.close();
+        try { activeAudioRef.current.context.close(); } catch(e) {}
       }
       
-      const playing = await playGeneratedAudio(explorerData.audioUrl);
-      activeAudioRef.current = playing;
-      
-      playing.source.onended = () => {
-        if (activeAudioRef.current === playing) {
-          activeAudioRef.current = null;
-        }
-      };
+      try {
+        const playing = await playGeneratedAudio(explorerData.audioUrl);
+        activeAudioRef.current = playing;
+        
+        playing.source.onended = () => {
+          if (activeAudioRef.current === playing) {
+            activeAudioRef.current = null;
+          }
+        };
+      } catch (err) {
+        console.error("Audio playback failed:", err);
+      }
     }
   };
 
@@ -96,28 +99,31 @@ const App: React.FC = () => {
       img.src = explorerData.imageUrl;
       await new Promise(r => img.onload = r);
       
-      // Audio Setup
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioCtx();
       const dest = audioCtx.createMediaStreamDestination();
       const source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(dest);
       
-      // Canvas Stream
       const canvasStream = canvas.captureStream(30);
       const combinedStream = new MediaStream([
         ...canvasStream.getVideoTracks(),
         ...dest.stream.getAudioTracks()
       ]);
 
-      const recorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+      // Detect supported mime type
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4') 
+        ? 'video/mp4' 
+        : 'video/webm;codecs=vp9,opus';
+
+      const recorder = new MediaRecorder(combinedStream, { mimeType });
       const chunks: Blob[] = [];
       recorder.ondataavailable = (e) => chunks.push(e.data);
       
       recorder.start();
       source.start();
 
-      // Render the image into the canvas while recording
       const render = () => {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         if (recorder.state === 'recording') requestAnimationFrame(render);
@@ -129,15 +135,15 @@ const App: React.FC = () => {
       recorder.stop();
       await new Promise(r => recorder.onstop = r);
 
-      const videoBlob = new Blob(chunks, { type: 'video/mp4' });
+      const videoBlob = new Blob(chunks, { type: mimeType });
       const url = URL.createObjectURL(videoBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `multiverse-${explorerData.name}.mp4`;
+      a.download = `multiverse-${explorerData.name}.${mimeType.includes('mp4') ? 'mp4' : 'webm'}`;
       a.click();
     } catch (err) {
       console.error('Video generation failed:', err);
-      alert('Video synthesis failed. You can still download the image normally.');
+      alert('Video synthesis failed on this device. You can still download the image normally.');
     } finally {
       setIsExporting(false);
     }
@@ -146,7 +152,7 @@ const App: React.FC = () => {
   const reset = () => {
     if (activeAudioRef.current) {
       try { activeAudioRef.current.source.stop(); } catch (e) {}
-      activeAudioRef.current.context.close();
+      try { activeAudioRef.current.context.close(); } catch (e) {}
       activeAudioRef.current = null;
     }
     setState(AppState.IDLE);
