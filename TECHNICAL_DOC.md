@@ -52,6 +52,11 @@ The app transitions through the following states:
 3.  `COMPLETED`: All assets (Image, JSON, Audio) are ready and rendered.
 4.  `ERROR`: Graceful handling of API failures or trans-dimensional instability.
 
-## 5. Security & Environment
-- **API Key:** The application assumes `process.env.API_KEY` is provided by the hosting environment.
-- **Permissions:** `metadata.json` requests `camera` permissions for potential direct-capture expansion.
+## 5. Security & Key Management
+
+The application adheres to the principle of "External Configuration":
+
+- **No Hardcoded Keys:** The `API_KEY` is never written directly in the code or stored in the file system (no `.env` file).
+- **Injected Context:** The application expects `process.env.API_KEY` to be available in its execution context. This is handled by the platform at runtime.
+- **SDK Instantiation:** The `GoogleGenAI` client is instantiated inside the service functions to ensure it always picks up the latest environment configuration.
+- **Reference:** See `services/geminiService.ts` for the implementation details.

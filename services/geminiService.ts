@@ -2,9 +2,9 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import { Universe } from "../types";
 
-const API_KEY = process.env.API_KEY || '';
-
-// Base64 decode helper
+/**
+ * Helper to decode base64 strings into Uint8Arrays for PCM processing.
+ */
 function decode(base64: string) {
   const binaryString = atob(base64);
   const len = binaryString.length;
@@ -15,7 +15,10 @@ function decode(base64: string) {
   return bytes;
 }
 
-// Raw PCM to AudioBuffer
+/**
+ * Decodes raw PCM data returned by Gemini TTS into an AudioBuffer.
+ * Note: Gemini TTS returns raw 16-bit PCM at 24kHz.
+ */
 async function decodeAudioData(
   data: Uint8Array,
   ctx: AudioContext,
@@ -40,10 +43,11 @@ export const generateMultiverseIdentity = async (
   universe: Universe,
   onProgress: (step: string) => void
 ) => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  // Always instantiate GoogleGenAI within the call to ensure the latest API key is used
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
   const imageBase64Data = base64Image.split(',')[1];
 
-  // 1. Generate Transformed Image
+  // 1. Generate Transformed Image using Gemini 2.5 Flash Image
   onProgress('Consulting the Multiverse shards...');
   const imageResponse = await ai.models.generateContent({
     model: 'gemini-2.5-flash-image',
@@ -56,7 +60,7 @@ export const generateMultiverseIdentity = async (
           },
         },
         {
-          text: `Transform the person in this photo into a character ${universe.promptModifier}. Maintain their facial features but adapt them completely to the new universe's aesthetic. High quality, detailed.`,
+          text: `Transform the person in this photo into a character ${universe.promptModifier}. Maintain their facial features but adapt them completely to the new universe's aesthetic. High quality, detailed portrait.`,
         },
       ],
     },
@@ -68,6 +72,7 @@ export const generateMultiverseIdentity = async (
   });
 
   let generatedImageUrl = '';
+  // Correctly iterate through parts to find the image data
   for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
     if (part.inlineData) {
       generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
@@ -76,7 +81,7 @@ export const generateMultiverseIdentity = async (
 
   if (!generatedImageUrl) throw new Error("Failed to generate image");
 
-  // 2. Generate Story & Detect Gender
+  // 2. Generate Story & Detect Gender using Gemini 3 Flash
   onProgress('Scanning biological signatures...');
   const textResponse = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -91,8 +96,8 @@ export const generateMultiverseIdentity = async (
         {
           text: `Analyze the person in this image and determine their gender (male or female). 
           Based on that, create a multiverse profile for them in the ${universe.name} universe. 
-          The profile should include a gender-appropriate name, a short witty 2-sentence backstory, and three stats (strength, intelligence, luck) from 1-100, and a "Dimension ID". 
-          Output as JSON.`,
+          The profile should include a gender-appropriate name, a short witty 2-sentence backstory, and three stats (strength, intelligence, luck) from 1-100, and a unique "Dimension ID". 
+          Output exclusively as valid JSON.`,
         }
       ]
     },
@@ -119,10 +124,11 @@ export const generateMultiverseIdentity = async (
     }
   });
 
+  // Extract text content using the property (not a method)
   const identity = JSON.parse(textResponse.text || '{}');
   const selectedVoice = identity.gender === 'female' ? universe.femaleVoice : universe.maleVoice;
 
-  // 3. Generate Audio Greeting
+  // 3. Generate Audio Greeting using Gemini 2.5 Flash TTS
   onProgress('Tuning the trans-dimensional frequencies...');
   const audioResponse = await ai.models.generateContent({
     model: "gemini-2.5-flash-preview-tts",

@@ -29,12 +29,18 @@ Cosmic Identity is an interactive web application that uses the Google Gemini AP
 - **Media Processing:** Web Audio API (PCM decoding), Canvas API, MediaRecorder API.
 - **Icons:** FontAwesome.
 
-## 🏁 Getting Started
+## 🌐 API Key & Deployment
 
-1.  Ensure you have an environment variable `API_KEY` configured with your Google Gemini API key.
+The application requires a Gemini API Key to function. 
+
+- **Internal Handling:** For security, the API key is not stored in the codebase or a local file. It is accessed as an environment variable via `process.env.API_KEY`.
+- **In this Sandbox:** The platform automatically injects the key into the environment for you. You do not need to create a `.env` file or manually enter a key.
+- **Production Deployment:** When deploying to Vercel, Netlify, or similar platforms, add a secret environment variable named `API_KEY` in your provider's dashboard.
+
+## 🏁 Getting Started (Local)
+
+1.  Export your Gemini API Key in your terminal: `export API_KEY=your_key_here`.
 2.  Open `index.html` in a modern web browser that supports ES modules and the Web Audio API.
-3.  Upload a clear selfie and select your destination universe.
-4.  Warp into the multiverse!
 
 ## 📜 Universes Available
 
