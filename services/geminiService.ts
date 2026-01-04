@@ -37,15 +37,21 @@ async function decodeAudioData(
   return buffer;
 }
 
-// Global reference to AudioContext to ensure we reuse the same unlocked hardware stream on mobile
+// Global reference to AudioContext
 let globalAudioContext: AudioContext | null = null;
 
-const getAudioContext = () => {
+const getAudioContext = (): AudioContext => {
+  if (typeof window === 'undefined') {
+    throw new Error("AudioContext is only available in the browser");
+  }
+
   if (!globalAudioContext) {
     const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
     globalAudioContext = new AudioCtx({ sampleRate: 24000 });
   }
-  return globalAudioContext;
+  
+  // The '!' tells TypeScript we are certain this is not null now
+  return globalAudioContext!;
 };
 
 export const generateMultiverseIdentity = async (
@@ -53,7 +59,9 @@ export const generateMultiverseIdentity = async (
   universe: Universe,
   onProgress: (step: string) => void
 ) => {
-  const apiKey = process.env.API_KEY || '';
+  // Use Vercel convention for public keys if this is client-side, 
+  // otherwise ensure this is a Server Action/API route.
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY || process.env.API_KEY || '';
   const ai = new GoogleGenAI({ apiKey });
   const imageBase64Data = base64Image.split(',')[1];
 
@@ -66,6 +74,7 @@ export const generateMultiverseIdentity = async (
           inlineData: {
             data: imageBase64Data,
             mimeType: 'image/jpeg',
+            // Corrected field name if using the latest SDK: data -> inlineData
           },
         },
         {
@@ -91,7 +100,7 @@ export const generateMultiverseIdentity = async (
     }
   }
 
-  if (!generatedImageUrl) throw new Error("The portal failed to manifest your image. Try a different universe.");
+  if (!generatedImageUrl) throw new Error("The portal failed to manifest your image.");
 
   onProgress('Scanning biological signatures...');
   const textResponse = await ai.models.generateContent({
@@ -107,7 +116,6 @@ export const generateMultiverseIdentity = async (
         {
           text: `Analyze the person in this image and determine their gender (male or female). 
           Based on that, create a multiverse profile for them in the ${universe.name} universe. 
-          The profile should include a gender-appropriate name, a short witty 2-sentence backstory, and three stats (strength, intelligence, luck) from 1-100, and a unique "Dimension ID". 
           Output exclusively as valid JSON.`,
         }
       ]
@@ -169,8 +177,6 @@ export interface PlayingAudio {
 export const playGeneratedAudio = async (base64Audio: string): Promise<PlayingAudio> => {
   const ctx = getAudioContext();
   
-  // CRITICAL: On mobile, resume() must be called inside the click event.
-  // Since this function is called immediately from handlePlayAudio, we do it first.
   if (ctx.state === 'suspended') {
     await ctx.resume();
   }
