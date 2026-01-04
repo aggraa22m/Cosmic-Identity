@@ -12,10 +12,11 @@ Cosmic Identity is an interactive web application that uses the Google Gemini AP
 
 ## 📖 How to Use
 
+Visit: https://cosmic-identity-nubu.vercel.app/
 1.  **Prepare your Portrait:** Ensure you have a clear selfie or portrait photo where your face is visible.
 2.  **Upload:** Click the "Click to upload a selfie" area and select your image.
 3.  **Choose your Destination:** Browse the available universes (like Cyberpunk, Viking, or Ghibli) and select the one you want to explore.
-4.  **Enter the Multiverse:** Click the large "Enter the Multiverse" button. Wait a few moments as the AI consultations the shards of reality.
+4.  **Enter the Multiverse:** Click the large "Enter the Multiverse" button. Wait a few moments.
 5.  **Explore your Identity:**
     *   **Listen:** Click "Hear Voice Greeting" to hear your character speak.
     *   **Analyze:** Check your generated stats and backstory.
@@ -37,10 +38,6 @@ The application requires a Gemini API Key to function.
 - **In this Sandbox:** The platform automatically injects the key into the environment for you. You do not need to create a `.env` file or manually enter a key.
 - **Production Deployment:** When deploying to Vercel, Netlify, or similar platforms, add a secret environment variable named `API_KEY` in your provider's dashboard.
 
-## 🏁 Getting Started (Local)
-
-1.  Export your Gemini API Key in your terminal: `export API_KEY=your_key_here`.
-2.  Open `index.html` in a modern web browser that supports ES modules and the Web Audio API.
 
 ## 📜 Universes Available
 
