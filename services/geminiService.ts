@@ -159,7 +159,8 @@ export const playGeneratedAudio = async (base64Audio: string): Promise<PlayingAu
   const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
   const outputAudioContext = new AudioCtx({ sampleRate: 24000 });
   
-  // CRITICAL: Mobile browsers require resume() to be called inside a user gesture
+  // Browsers (especially iOS Safari) require a user gesture to resume the AudioContext.
+  // This function is expected to be called from a click handler.
   if (outputAudioContext.state === 'suspended') {
     await outputAudioContext.resume();
   }
