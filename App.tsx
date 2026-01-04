@@ -144,18 +144,11 @@ const App: React.FC = () => {
   };
 
   const reset = () => {
-    // 1. Stop any playing audio
     if (activeAudioRef.current) {
-      try {
-        activeAudioRef.current.source.stop();
-      } catch (e) {
-        // Source might already be stopped
-      }
+      try { activeAudioRef.current.source.stop(); } catch (e) {}
       activeAudioRef.current.context.close();
       activeAudioRef.current = null;
     }
-
-    // 2. Reset App State
     setState(AppState.IDLE);
     setUploadedImage(null);
     setExplorerData(null);
@@ -165,13 +158,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#030712] text-gray-100 flex flex-col">
-      {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-900/20 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 blur-[120px] rounded-full"></div>
       </div>
 
-      {/* Header */}
       <header className="relative z-10 p-6 flex justify-between items-center border-b border-white/5 glass">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -204,7 +195,6 @@ const App: React.FC = () => {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Upload Section */}
               <div className="glass rounded-3xl p-8 border border-white/10 flex flex-col items-center justify-center gap-6 min-h-[350px]">
                 {uploadedImage ? (
                   <div className="relative group w-full aspect-square max-w-[280px]">
@@ -243,7 +233,6 @@ const App: React.FC = () => {
                 />
               </div>
 
-              {/* Selection Section */}
               <div className="space-y-6">
                 <h3 className="font-heading text-xl font-bold flex items-center gap-2">
                   <i className="fas fa-map-marked-alt text-purple-500"></i>
@@ -294,7 +283,6 @@ const App: React.FC = () => {
 
         {state === AppState.COMPLETED && explorerData && !isExporting && (
           <div className="w-full grid lg:grid-cols-12 gap-12 items-center animate-in fade-in zoom-in duration-1000">
-            {/* Image Preview */}
             <div className="lg:col-span-5 flex justify-center">
               <div className="relative group max-w-md w-full">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-[2.5rem] blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
@@ -319,7 +307,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Profile Info */}
             <div className="lg:col-span-7 space-y-8">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-bold uppercase tracking-wider border border-purple-500/20">
@@ -334,7 +321,6 @@ const App: React.FC = () => {
                 </p>
               </div>
 
-              {/* Stats Grid */}
               <div className="grid grid-cols-3 gap-6">
                 {[
                   { label: 'Strength', val: explorerData.stats.strength, icon: 'fa-dumbbell', color: 'bg-red-500' },
@@ -408,7 +394,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="relative z-10 p-8 text-center text-gray-500 text-sm border-t border-white/5">
-        <p>&copy; 2024 Multiverse Explorer • Powered by Gemini 2.5 & 3</p>
+        <p>&copy; 2024 Multiverse Explorer • Powered by Gemini AI</p>
       </footer>
     </div>
   );
