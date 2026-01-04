@@ -73,17 +73,18 @@ export const generateMultiverseIdentity = async (
   });
 
   let generatedImageUrl = '';
-  // Correctly iterate through parts to find the image data
-  const candidates = imageResponse.candidates;
-  if (candidates && candidates.length > 0) {
-    for (const part of candidates[0].content.parts) {
-      if (part.inlineData) {
+  // Safely iterate through candidates and parts
+  const firstCandidate = imageResponse.candidates?.[0];
+  if (firstCandidate?.content?.parts) {
+    for (const part of firstCandidate.content.parts) {
+      if (part.inlineData?.data) {
         generatedImageUrl = `data:image/png;base64,${part.inlineData.data}`;
+        break;
       }
     }
   }
 
-  if (!generatedImageUrl) throw new Error("Failed to generate image");
+  if (!generatedImageUrl) throw new Error("The portal failed to manifest your image. Try a different universe.");
 
   // 2. Generate Story & Detect Gender using Gemini 3 Flash
   onProgress('Scanning biological signatures...');
@@ -128,7 +129,7 @@ export const generateMultiverseIdentity = async (
     }
   });
 
-  // Extract text content using the property (not a method)
+  // Extract text content using the .text property safely
   const identity = JSON.parse(textResponse.text || '{}');
   const selectedVoice = identity.gender === 'female' ? universe.femaleVoice : universe.maleVoice;
 
