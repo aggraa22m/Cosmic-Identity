@@ -1,0 +1,7 @@
+{
+  "name": "Cosmic Identity: Multiverse Explorer",
+  "description": "Upload a selfie and travel through the multiverse. Using Gemini's advanced image, text, and speech generation, this app transforms you into a character from another dimension—complete with a unique backstory and an AI-voiced greeting.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
