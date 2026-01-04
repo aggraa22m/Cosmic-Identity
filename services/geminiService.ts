@@ -37,6 +37,17 @@ async function decodeAudioData(
   return buffer;
 }
 
+// Global reference to AudioContext to ensure we reuse the same unlocked hardware stream on mobile
+let globalAudioContext: AudioContext | null = null;
+
+const getAudioContext = () => {
+  if (!globalAudioContext) {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    globalAudioContext = new AudioCtx({ sampleRate: 24000 });
+  }
+  return globalAudioContext;
+};
+
 export const generateMultiverseIdentity = async (
   base64Image: string,
   universe: Universe,
@@ -156,34 +167,33 @@ export interface PlayingAudio {
 }
 
 export const playGeneratedAudio = async (base64Audio: string): Promise<PlayingAudio> => {
-  const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-  const outputAudioContext = new AudioCtx({ sampleRate: 24000 });
+  const ctx = getAudioContext();
   
-  // Browsers (especially iOS Safari) require a user gesture to resume the AudioContext.
-  // This function is expected to be called from a click handler.
-  if (outputAudioContext.state === 'suspended') {
-    await outputAudioContext.resume();
+  // CRITICAL: On mobile, resume() must be called inside the click event.
+  // Since this function is called immediately from handlePlayAudio, we do it first.
+  if (ctx.state === 'suspended') {
+    await ctx.resume();
   }
 
   const audioBuffer = await decodeAudioData(
     decode(base64Audio),
-    outputAudioContext,
+    ctx,
     24000,
     1,
   );
-  const source = outputAudioContext.createBufferSource();
+  
+  const source = ctx.createBufferSource();
   source.buffer = audioBuffer;
-  source.connect(outputAudioContext.destination);
+  source.connect(ctx.destination);
   source.start();
-  return { source, context: outputAudioContext };
+  return { source, context: ctx };
 };
 
 export const getAudioBuffer = async (base64Audio: string): Promise<AudioBuffer> => {
-  const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
-  const outputAudioContext = new AudioCtx({ sampleRate: 24000 });
+  const ctx = getAudioContext();
   return await decodeAudioData(
     decode(base64Audio),
-    outputAudioContext,
+    ctx,
     24000,
     1,
   );
